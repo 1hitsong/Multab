@@ -7,7 +7,8 @@
     xmlns:app="clr-namespace:MulTab"
     Title="Multab"
     Width="800"
-    Height="749">
+    Height="749"
+    KeyDown="MulTabWindow_KeyDown">
 
     <Window.Resources>
 
@@ -77,7 +78,7 @@
                     CornerRadius="10">
                     <TabControl
                         Name="tabControl1"
-                        Margin="4"
+                        Margin="4,39,4,4"
                         Background="Transparent"
                         DataContext="this">
                         <TabControl.ItemContainerStyle>
@@ -85,20 +86,25 @@
                                 <EventSetter Event="Loaded" Handler="TabItem_Loaded" />
                             </Style>
                         </TabControl.ItemContainerStyle>
-                        <TabControl.Resources>
-                            <DataTemplate x:Key="tabItemContent" x:Shared="false">
-                                <WindowsAPICodePackPresentation:ExplorerBrowser Margin="5" ViewMode="{Binding SelectedValue, ElementName=ViewModeCombo, Mode=TwoWay}" />
-                            </DataTemplate>
-                        </TabControl.Resources>
                     </TabControl>
                 </Border>
+                <TextBox
+                    x:Name="textBox"
+                    Width="475"
+                    Height="23"
+                    Margin="10,10,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    KeyUp="textBox_KeyUp"
+                    Text="TextBox"
+                    TextWrapping="Wrap" />
 
             </Grid>
         </Grid>
         <Button
             x:Name="closeTab"
             Width="75"
-            Margin="0,12,34,0"
+            Margin="0,12,10,0"
             HorizontalAlignment="Right"
             VerticalAlignment="Top"
             Click="closeTab_Click"
@@ -106,10 +112,18 @@
         <Button
             x:Name="button"
             Width="75"
-            Margin="573,11,0,0"
-            HorizontalAlignment="Left"
+            Margin="0,11,100,0"
+            HorizontalAlignment="Right"
             VerticalAlignment="Top"
             Click="newTab_Click"
             Content="New Tab" />
+        <Button
+            x:Name="button_upOneFolder"
+            Width="92"
+            Margin="0,11,190,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Click="button_upOneFolder_Click"
+            Content="Up One Folder" />
     </Grid>
 </Window>
