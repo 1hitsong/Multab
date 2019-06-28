@@ -12,9 +12,37 @@ var action
 var clickTimer
 var activeTabIndex = 0
 
+function closeActiveTab() {
+    
+    // Close program if only 1 window was open
+    if (document.querySelectorAll('#tabContainer .tab').length === 1) {
+        var window = remote.getCurrentWindow();
+        window.close();
+        return;
+    }
+
+    document.querySelectorAll('#tabContainer .tab')[activeTabIndex].remove()
+    document.querySelectorAll('#tabHeader a')[activeTabIndex].remove()
+
+    if (activeTabIndex > 0) {
+        activeTabIndex--
+    }
+
+    document.querySelectorAll('#tabHeader a')[activeTabIndex].classList.add('active')
+    document.querySelectorAll('#tabContainer .tab')[activeTabIndex].classList.add('active')
+    
+}
+
 document.addEventListener('keydown', (e) => {
+    //e.preventDefault();
+
     if (e.code == 'KeyT' && e.ctrlKey) {
         createNewTab();
+    }
+
+    if (e.code == 'KeyW' && e.ctrlKey) {
+        e.preventDefault();
+        closeActiveTab();
     }
 
     if (e.code == 'Delete') {
@@ -82,10 +110,6 @@ document.addEventListener('keydown', (e) => {
     
 })
 
-function linkOnly(objElement) {
-    return objElement.tagName === 'A';
-  }
-
 document.getElementById('tabHeader').addEventListener('click', (e) => {
     if(e.target.id === 'close') {
         var window = remote.getCurrentWindow();
@@ -135,7 +159,7 @@ document.getElementById('tabContainer').addEventListener('dblclick', (e) => {
                     getDirectoryContents(contentClass, directoryPath)
                 }
                 else if (pathEntry.classList.contains('file')) {
-                    exec('start ' + path.join(document.querySelector('#tabContainer .active .directory').value, pathEntry.getAttribute('data-filename')).replace(' ', '%20'));
+                    exec('start "" "' + path.join(document.querySelector('#tabContainer .active .directory').value, pathEntry.getAttribute('data-filename')) + '"');
                 }
             }
         })
@@ -143,6 +167,10 @@ document.getElementById('tabContainer').addEventListener('dblclick', (e) => {
 })
 
 getDirectoryContents(contentClass, document.querySelector('#tabContainer .active .directory').value)
+
+function linkOnly(objElement) {
+    return objElement.tagName === 'A';
+}
 
 function createNewTab() {
     document.getElementById('tabHeader').innerHTML += '<a class="active">Tab 2</a>'
