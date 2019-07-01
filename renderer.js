@@ -188,26 +188,22 @@ function getDirectoryContents(contentClass, directory) {
     document.querySelectorAll('#tabContainer .tab')[activeTabIndex].querySelector('.directory').setAttribute('value', directory)
     document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML = '<li data-type="parent">...</li>'
 
-    fs.readdir(directory, function (err, files) {
+    let options = { withFileTypes: true }
+
+    fs.readdir(directory, { withFileTypes: true }, function (err, files) {
 
         if (err) {
             return console.log('Unable to scan directory: ' + err);
         } 
 
         files.forEach( (file) => {
-
-            fs.lstat(path.join(directory, file), (err, stats) => {
-                if (err) {
-                    return console.log('Unable to scan directory: ' + err);
+                if (file.isFile()) {
+                    document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += `<li class="file" data-type="file" data-filename="${file.name}"><img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(file.name, 'svg')}" />${file.name}</li>`
+                }
+                else if (file.isDirectory() && !['$', '.'].includes(file.name.charAt(0))) {
+                    document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += `<li class="folder" data-type="folder" data-filename="${file.name}"><img class="icon" src='images/folder.svg' />${file.name}</li>`
                 }
 
-                if (stats.isFile()) {
-                    document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += `<li class="file" data-type="file" data-filename="${file}"><img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(file, 'svg')}" />${file}</li>`
-                }
-                else if (stats.isDirectory()) {
-                    document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += `<li class="folder" data-type="folder" data-filename="${file}"><img class="icon" src='images/folder.svg' />${file}</li>`
-                }
-            });
         });
     });
 }
