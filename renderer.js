@@ -190,20 +190,46 @@ function getDirectoryContents(contentClass, directory) {
 
     let options = { withFileTypes: true }
 
-    fs.readdir(directory, { withFileTypes: true }, function (err, files) {
+    scanDirStream(directory)
+}
 
-        if (err) {
-            return console.log('Unable to scan directory: ' + err);
-        } 
+function processFolderListing(file, type) {
+    var res = file.split('\r\n')
+    var fileList = ''
+    var itemsProcessed = 0;
 
-        files.forEach( (file) => {
-                if (file.isFile()) {
-                    document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += `<li class="file" data-type="file" data-filename="${file.name}"><img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(file.name, 'svg')}" />${file.name}</li>`
-                }
-                else if (file.isDirectory() && !['$', '.'].includes(file.name.charAt(0))) {
-                    document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += `<li class="folder" data-type="folder" data-filename="${file.name}"><img class="icon" src='images/folder.svg' />${file.name}</li>`
-                }
+    res.forEach( (element) => {
 
-        });
+        if (element.length !== 0) {
+            if (type === 'file') {                
+                fileList += `<li class="file" data-type="file" data-filename="${element}"><img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(element, 'svg')}" />${element}</li>`
+            }
+            else if (!['$', '.'].includes(element.charAt(0))) {
+                fileList += `<li class="folder" data-type="folder" data-filename="${element}"><img class="icon" src='images/folder.svg' />${element}</li>`
+            }
+        }
+
+        itemsProcessed++;
+
+        if(itemsProcessed === res.length) {
+            document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += fileList
+        }
     });
+}
+
+function scanDirStream(needle) {
+    return new Promise((resolve, reject) => {
+
+        var dirListing = exec('dir /B /A:D ' + needle)
+        
+        var fileListing = exec('dir /B /A:-D ' + needle)
+
+        dirListing.stdout.on('data', _data => {
+            processFolderListing(_data, 'directory')
+        });
+
+        fileListing.stdout.on('data', _data => {
+            processFolderListing(_data, 'file')
+        });
+    })
 }
