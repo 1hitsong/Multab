@@ -11,6 +11,7 @@ var copiedElement = ''
 var action
 var clickTimer
 var activeTabIndex = 0
+var editMode = false
 
 function closeActiveTab() {
     
@@ -34,7 +35,9 @@ function closeActiveTab() {
 }
 
 document.addEventListener('keydown', (e) => {
-    //e.preventDefault();
+    if (e.code === 'Escape') {
+        if (editMode) makeFileNotEditable()
+    }
 
     if (e.code == 'KeyT' && e.ctrlKey) {
         createNewTab();
@@ -46,6 +49,8 @@ document.addEventListener('keydown', (e) => {
     }
 
     if (e.code == 'Delete') {
+        if (editMode) return
+
         if (document.getElementsByClassName('selected').length) {
             fs.remove(path.join(document.querySelector('#tabContainer .active .directory').value, document.getElementsByClassName('selected')[0].getAttribute('data-filename')))
             .then(() => {
@@ -57,11 +62,16 @@ document.addEventListener('keydown', (e) => {
         }
     }  
 
-    if (e.code == 'Enter') {
-       if (e.target.className === 'directory') {
-            directoryPath = document.querySelector('#tabContainer .active .directory').value
-            getDirectoryContents(contentClass, directoryPath)
-       }
+    if (e.code == 'Enter' || e.code ==='NumpadEnter') {
+        if (editMode) {
+            renameFile(path.join(document.querySelector('#tabContainer .active .directory').value, document.getElementsByClassName('selected')[0].getAttribute('data-filename')))
+            return;
+        }
+
+        if (e.target.className === 'directory') {
+                directoryPath = document.querySelector('#tabContainer .active .directory').value
+                getDirectoryContents(contentClass, directoryPath)
+        }
         
         if (document.getElementsByClassName('selected').length) {
 
@@ -70,12 +80,19 @@ document.addEventListener('keydown', (e) => {
                 getDirectoryContents(contentClass, directoryPath)
             }    
             else if (document.getElementsByClassName('selected')[0].classList.contains('file')) {
-                exec('start ' + path.join(document.querySelector('#tabContainer .active .directory').value, document.getElementsByClassName('selected')[0].getAttribute('data-filename')));
+                openFile(path.join(document.querySelector('#tabContainer .active .directory').value, document.getElementsByClassName('selected')[0].getAttribute('data-filename')));
             }
             else if (document.getElementsByClassName('selected')[0].getAttribute('data-type') === 'parent') {
                 directoryPath = path.resolve(document.querySelector('#tabContainer .active .directory').value, '..')
                 getDirectoryContents(contentClass, directoryPath)
             }
+        }
+    }
+    
+    if (e.code == 'F2') {
+        if (document.getElementsByClassName('selected').length) {
+            copiedElement = path.join(document.querySelector('#tabContainer .active .directory').value, document.getElementsByClassName('selected')[0].getAttribute('data-filename'))
+            makeFileEditable(copiedElement)
         }
     }
     
@@ -128,6 +145,8 @@ document.getElementById('tabHeader').addEventListener('click', (e) => {
 })
 
 document.getElementById('tabContainer').addEventListener('click', (e) => {
+    if (editMode) return
+
     clearTimeout(clickTimer);
     clickTimer = setTimeout(function() {
         e.path.forEach( (pathEntry) => {
@@ -145,6 +164,8 @@ document.getElementById('tabContainer').addEventListener('click', (e) => {
 })
 
 document.getElementById('tabContainer').addEventListener('dblclick', (e) => {
+    if (editMode) return
+
     clearTimeout(clickTimer);
 
     if (e.target.getAttribute('data-type') === 'parent') {
@@ -159,7 +180,7 @@ document.getElementById('tabContainer').addEventListener('dblclick', (e) => {
                     getDirectoryContents(contentClass, directoryPath)
                 }
                 else if (pathEntry.classList.contains('file')) {
-                    exec('start "" "' + path.join(document.querySelector('#tabContainer .active .directory').value, pathEntry.getAttribute('data-filename')) + '"');
+                    openFile(path.join(document.querySelector('#tabContainer .active .directory').value, pathEntry.getAttribute('data-filename')));
                 }
             }
         })
@@ -167,6 +188,41 @@ document.getElementById('tabContainer').addEventListener('dblclick', (e) => {
 })
 
 getDirectoryContents(contentClass, document.querySelector('#tabContainer .active .directory').value)
+
+function openFile(filePath) {
+    exec('start "" "' + filePath + '"');
+}
+
+function makeFileNotEditable() {
+    editMode = false
+    var el = document.querySelector('.folderContents .selected span')
+    el.setAttribute('contenteditable', false)
+}
+
+function makeFileEditable(file) {
+    editMode = true
+    var el = document.querySelector('.folderContents .selected span')
+    
+    el.setAttribute('contenteditable', true)
+
+    var range = document.createRange();
+    var sel = window.getSelection();
+    range.setStart(el, 0);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+function renameFile(file) {
+    makeFileNotEditable();
+
+    var newFileName = path.join(document.querySelector('#tabContainer .active .directory').value, document.querySelector('.folderContents .selected span').textContent)
+    
+    fs.rename(file, newFileName, (err) => {
+        if (err) console.log(err);
+        getDirectoryContents(contentClass, document.querySelector('#tabContainer .active .directory').value)
+    })
+}
 
 function linkOnly(objElement) {
     return objElement.tagName === 'A';
@@ -179,16 +235,12 @@ function createNewTab() {
     getDirectoryContents(contentClass, document.querySelector('#tabContainer .active .directory').value)
 }
 
-function getDirectoryContents(contentClass, directory) {
-    // Name to set the property and the attribute for it to work correctly
-    
+function getDirectoryContents(contentClass, directory) {    
     document.querySelector('#tabHeader .active').innerHTML = path.basename(directory) === '' ? path.dirname(directory) : path.basename(directory)
 
     document.querySelectorAll('#tabContainer .tab')[activeTabIndex].querySelector('.directory').value = directory
     document.querySelectorAll('#tabContainer .tab')[activeTabIndex].querySelector('.directory').setAttribute('value', directory)
     document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML = '<li data-type="parent">...</li>'
-
-    let options = { withFileTypes: true }
 
     scanDirStream(directory)
 }
@@ -202,10 +254,10 @@ function processFolderListing(file, type) {
 
         if (element.length !== 0) {
             if (type === 'file') {                
-                fileList += `<li class="file" data-type="file" data-filename="${element}"><img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(element, 'svg')}" />${element}</li>`
+                fileList += `<li class="file" data-type="file" data-filename="${element}"><img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(element, 'svg')}" /><span>${element}</span></li>`
             }
             else if (!['$', '.'].includes(element.charAt(0))) {
-                fileList += `<li class="folder" data-type="folder" data-filename="${element}"><img class="icon" src='images/folder.svg' />${element}</li>`
+                fileList += `<li class="folder" data-type="folder" data-filename="${element}"><img class="icon" src='images/folder.svg' /><span>${element}</span></li>`
             }
         }
 
