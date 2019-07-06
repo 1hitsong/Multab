@@ -4,6 +4,8 @@ const fs = require('fs-extra')
 const prettyFileIcons = require('pretty-file-icons');
 const remote = require('electron').remote;
 const exec = require('child_process').exec;
+const fileBytes = require('file-bytes');
+const prettyBytes = require('pretty-bytes');
 
 var directoryPath
 var contentClass = 'folderContents'
@@ -124,7 +126,6 @@ document.addEventListener('keydown', (e) => {
             }
         }
     }
-    
 })
 
 document.getElementById('tabHeader').addEventListener('click', (e) => {
@@ -150,7 +151,7 @@ document.getElementById('tabContainer').addEventListener('click', (e) => {
     clearTimeout(clickTimer);
     clickTimer = setTimeout(function() {
         e.path.forEach( (pathEntry) => {
-            if (pathEntry.tagName === 'LI') {
+            if (pathEntry.tagName === 'TR') {
                 if (document.getElementsByClassName('selected').length) {
                     document.getElementsByClassName('selected')[0].classList.remove('selected')
                 }
@@ -230,7 +231,7 @@ function linkOnly(objElement) {
 
 function createNewTab() {
     document.getElementById('tabHeader').innerHTML += '<a class="active">Tab 2</a>'
-    document.getElementById('tabContainer').innerHTML += '<div class="tab"><input type="text" class="directory" value="c:\\" /><div class="folderContents"></div></div>'
+    document.getElementById('tabContainer').innerHTML += '<div class="tab"><input type="text" class="directory" value="c:\\" /><div class="folderContents"><table></table></div></div>'
     document.getElementById('tabHeader').children[document.getElementById('tabHeader').childElementCount - 1].click()
     getDirectoryContents(contentClass, document.querySelector('#tabContainer .active .directory').value)
 }
@@ -240,7 +241,7 @@ function getDirectoryContents(contentClass, directory) {
 
     document.querySelectorAll('#tabContainer .tab')[activeTabIndex].querySelector('.directory').value = directory
     document.querySelectorAll('#tabContainer .tab')[activeTabIndex].querySelector('.directory').setAttribute('value', directory)
-    document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML = '<li data-type="parent">...</li>'
+    document.querySelectorAll('#tabContainer .tab')[activeTabIndex].querySelector('table').innerHTML = '<tr data-type="parent"><td>...</td></tr>'
 
     scanDirStream(directory)
 }
@@ -251,20 +252,32 @@ function processFolderListing(file, type) {
     var itemsProcessed = 0;
 
     res.forEach( (element) => {
-
         if (element.length !== 0) {
             if (type === 'file') {                
-                fileList += `<li class="file" data-type="file" data-filename="${element}"><img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(element, 'svg')}" /><span>${element}</span></li>`
+                fileList += `<tr class="file" data-type="file" data-filename="${element}">
+                                <td>
+                                    <img class="icon" src="node_modules/pretty-file-icons/svg/${prettyFileIcons.getIcon(element, 'svg')}" />
+                                    <span>${element}</span>
+                                </td>
+                                <td>
+                                    ${prettyBytes(fileBytes.sync(path.join(document.querySelector('#tabContainer .active .directory').value, element)))}
+                                </td>
+                            </tr>`
             }
             else if (!['$', '.'].includes(element.charAt(0))) {
-                fileList += `<li class="folder" data-type="folder" data-filename="${element}"><img class="icon" src='images/folder.svg' /><span>${element}</span></li>`
+                fileList += `<tr class="folder" data-type="folder" data-filename="${element}">
+                                <td>
+                                    <img class="icon" src='images/folder.svg' />
+                                    <span>${element}</span>
+                                </td>
+                            </tr>`
             }
         }
 
         itemsProcessed++;
 
         if(itemsProcessed === res.length) {
-            document.getElementsByClassName(contentClass)[activeTabIndex].innerHTML += fileList
+            document.querySelectorAll('#tabContainer .tab')[activeTabIndex].querySelector('table').innerHTML += fileList
         }
     });
 }

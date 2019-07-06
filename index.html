@@ -7,14 +7,15 @@
             html { background: #ddd; height: 100%;}
             body { font: 13px sans-serif; height: 100%; margin: 0; overflow: hidden; }
             #tabManager {height: 100%; -webkit-app-region:drag;}
-            .folderContents li { list-style: none; margin: .5em 0;}
-            .folderContents li:hover { background:#f0f0f0;}
-            li.selected { background: lightblue; }
+            .folderContents table { width: 100%;}
+            .folderContents tr { list-style: none; margin: .5em 0;}
+            .folderContents tr:hover { background:#f0f0f0;}
+            tr.selected { background: lightblue; }
             .icon { height: 32px; vertical-align: middle; margin-right: 5px; width: 32px; }
             #tabHeader {display: table-row; height: 4%; padding: 0 10px; }
-            #tabHeader a {background: #e7e7e7; border: solid transparent; border-radius: 5px 5px 0 0; border-width: 1px 1px 0; display: inline-table; float: left; -webkit-app-region: no-drag; margin: 3px 5px 0 10px; padding: 5px 8px 1px 10px; user-select: none;}
+            #tabHeader a {background: #e7e7e7; border: solid transparent; border-radius: 5px 5px 0 0; border-width: 1px 1px 0; display: inline-table; float: left; -webkit-app-region: no-drag; margin: 3px 0 0 5px; padding: 5px 8px 1px 10px; user-select: none;}
             #tabHeader a:hover {background: #eee;}
-            #tabHeader a.active {background: #f7f7f7; border: solid #ccc; border-width: 1px 1px 0; margin: 2px 5px -1px 10px; padding: 5px 8px 3px 10px; }
+            #tabHeader a.active {background: #f7f7f7; border: solid #ccc; border-width: 1px 1px 0; margin: 2px 0 -1px 5px; padding: 5px 8px 3px 10px; }
             #tabContainer { background: #f7f7f7; border: 1px solid #ccc; height: 96%; user-select: none; -webkit-app-region: no-drag;}
             #tabContainer .tab { display: none; height: 100%; padding: 10px; position: relative; }
             #tabContainer .tab.active { display: block; }
@@ -45,7 +46,11 @@
         <div id="tabContainer">
           <div class="tab active">
               <input type="text" class="directory" value="c:\" />
-              <div class="folderContents"></div>
+              <div class="folderContents">
+                <table>
+
+                </table>
+              </div>
           </div>
         </div>
     </div>

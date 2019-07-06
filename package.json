@@ -21,7 +21,9 @@
     "electron-packager": "^14.0.0"
   },
   "dependencies": {
+    "file-bytes": "^2.0.3",
     "fs-extra": "^8.0.1",
+    "pretty-bytes": "^5.2.0",
     "pretty-file-icons": "^2.2.1"
   }
 }
