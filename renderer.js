@@ -6,6 +6,7 @@ const remote = require('electron').remote;
 const exec = require('child_process').exec;
 const fileBytes = require('file-bytes');
 const prettyBytes = require('pretty-bytes');
+const os = require('os');
 
 var directoryPath
 var contentClass = 'folderContents'
@@ -165,7 +166,7 @@ document.getElementById('tabContainer').addEventListener('click', (e) => {
 })
 
 document.getElementById('tabContainer').addEventListener('dblclick', (e) => {
-    if (editMode) return
+    if (editMode) return    
 
     clearTimeout(clickTimer);
 
@@ -177,7 +178,15 @@ document.getElementById('tabContainer').addEventListener('dblclick', (e) => {
         e.path.forEach( (pathEntry) => {
             if (pathEntry.classList) {
                 if (pathEntry.classList.contains('folder')) {
-                    directoryPath = path.join(document.querySelector('#tabContainer .active .directory').value, pathEntry.getAttribute('data-filename'))
+                    pathEntry.setAttribute('data-filename', pathEntry.getAttribute('data-filename').replace('%%userprofile%%', os.userInfo().homedir))
+
+                    if (pathEntry.getAttribute('data-filename').indexOf(':\\') === -1) {
+                        directoryPath = path.join(document.querySelector('#tabContainer .active .directory').value, pathEntry.getAttribute('data-filename'))
+                    }
+                    else {
+                        directoryPath = pathEntry.getAttribute('data-filename')
+                    }
+                    
                     getDirectoryContents(contentClass, directoryPath)
                 }
                 else if (pathEntry.classList.contains('file')) {
