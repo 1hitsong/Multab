@@ -42,7 +42,7 @@ node_modules/
 jspm_packages/
 
 # Build Folder
-bin/
+build/
 
 # TypeScript v1 declaration files
 typings/
