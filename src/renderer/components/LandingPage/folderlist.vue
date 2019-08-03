@@ -65,8 +65,6 @@
     name: 'folderlist',
     data: function() {
       return {
-        workingfile: '',
-        selected: {},
         directory: 'C:\\',
         folderdata: [],
         homedirectory: os.userInfo().homedir + '\\'
@@ -79,7 +77,6 @@
 
       onSelect (item) {
         EventBus.$emit('select', item);
-        this.selected = item
       },
 
       go: function () {
@@ -108,75 +105,46 @@
 
         this.$set(this, "folderdata", []);
 
-        let hasSubFolders = false;
-        let hasFiles = false;
         var folders = [];
         var files = [];
         let folderListingCommand = exec('dir /B /A:D ' + this.directory);
-        let fileListingCommand = exec('dir /B /A:-D ' + this.directory);
-
-        folderListingCommand.stdout.on('close', () => {
-          if (!hasSubFolders) {
-            //this.$set(this, "folderdata", []);
-          }
-        });
+        let fileListingCommand;
 
         folderListingCommand.stdout.on('data', _data => {
-          hasSubFolders = true;
-
           var res = _data.split('\r\n');
-          var i = 0;
 
           res = res.filter((item) => !['.', '$'].includes(item.charAt(0)));
           res.forEach( (element) => {
             if (element.length) {
-              this.folderdata.push({ id: 'i' + uuid(), name: element, directory: this.directory + element, icon: './static/folder.svg', type: 'folder'});
-            }
-
-            i++;
-            
-            if (i === res.length) {
-              //this.$set(this, "folderdata", folders);
+              folders.push({ id: 'i' + uuid(), name: element, directory: this.directory + element, icon: './static/folder.svg', type: 'folder'});
             }
           });
         }); 
 
-        fileListingCommand.stdout.on('close', () => {
-          if (!hasFiles) {
-            this.$set(this, "filedata", []);
-          }
+        folderListingCommand.stdout.on('close', () => {
+          this.$set(this, "folderdata", this.folderdata.concat(folders));
+          fileListingCommand = exec('dir /B /A:-D ' + this.directory);
+
+          fileListingCommand.stdout.on('data', _data => {
+            var res = _data.split('\r\n');
+
+            res = res.filter((item) => !['.', '$'].includes(item.charAt(0)));
+            res.forEach( (element) => {
+              if (element.length) {
+                files.push({ id: 'i' + uuid(), name: element, directory: this.directory + element, icon: `./static/fileicons/${prettyFileIcons.getIcon(element, 'svg')}`, type: 'file'});
+              }
+            });
+          }); 
+
+          fileListingCommand.stdout.on('close', () => {
+            this.$set(this, "folderdata", this.folderdata.concat(files));
+          });
         });
-
-        fileListingCommand.stdout.on('data', _data => {
-          hasFiles = true;
-
-          var res = _data.split('\r\n');
-          var i = 0;
-
-          res = res.filter((item) => !['.', '$'].includes(item.charAt(0)));
-          res.forEach( (element) => {
-            if (element.length) {
-              this.folderdata.push({ id: 'i' + uuid(), name: element, directory: this.directory + element, icon: `./static/fileicons/${prettyFileIcons.getIcon(element, 'svg')}`, type: 'file'});
-            }
-
-            i++;
-            
-            if (i === res.length) {
-              //this.$set(this, "filedata", files);
-            }
-          });
-        }); 
 
       }
     },
     created() {
       this.dir();
-      
-      document.addEventListener('keydown', (evt) => {
-        evt = evt || window.event;
-
-
-      })
     }
   }
 </script>
