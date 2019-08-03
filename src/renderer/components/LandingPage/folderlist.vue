@@ -48,10 +48,7 @@
   import os from 'os';
   import { EventBus } from './event-bus.js';
   import { MdApp, MdDrawer, MdButton, MdField, MdContent, MdTabs, MdTable, MdCard, MdRipple, MdIcon, MdList } from 'vue-material/dist/components'
-  import VuejsDialog from 'vuejs-dialog';
-  import 'vuejs-dialog/dist/vuejs-dialog.min.css';
 
-  Vue.use(VuejsDialog);
   Vue.use(MdApp)
   Vue.use(MdDrawer)
   Vue.use(MdButton)
@@ -186,14 +183,8 @@
       document.addEventListener('keydown', (evt) => {
         evt = evt || window.event;
 
-        if (evt.code === 'Delete') {
-          let me = this;
-          this.$dialog.confirm('Please confirm to continue')
-            .then(function(dialog) {
-              fs.remove(me.selected.directory);
-            });
-        }
-        else if (evt.code === 'F2') {
+        
+        if (evt.code === 'F2') {
           this.renameMode = true;
           document.getElementById(this.selected.id).removeAttribute('readonly');
         }
@@ -210,6 +201,7 @@
             document.getElementById(this.selected.id).setAttribute('readonly', 'readonly');
           }
         }
+
       })
     }
   }
