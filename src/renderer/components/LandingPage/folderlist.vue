@@ -65,8 +65,6 @@
     name: 'folderlist',
     data: function() {
       return {
-        action: '',
-        renameMode: false,
         workingfile: '',
         selected: {},
         directory: 'C:\\',
@@ -80,13 +78,7 @@
       },
 
       onSelect (item) {
-        if(this.selected != item & this.renameMode) {
-          this.renameMode = false;
-          document.getElementById(this.selected.id).setAttribute('readonly', 'readonly');
-        }
-
-
-        EventBus.$emit('select', item.directory);
+        EventBus.$emit('select', item);
         this.selected = item
       },
 
@@ -183,24 +175,6 @@
       document.addEventListener('keydown', (evt) => {
         evt = evt || window.event;
 
-        
-        if (evt.code === 'F2') {
-          this.renameMode = true;
-          document.getElementById(this.selected.id).removeAttribute('readonly');
-        }
-        else if (evt.code === 'Escape') {
-          if(this.renameMode) {
-            this.renameMode = false;
-            document.getElementById(this.selected.id).setAttribute('readonly', 'readonly');
-          }
-        }
-        else if (evt.code === 'Enter') {
-          if(this.renameMode) {
-            fs.rename(this.selected.directory, path.join(this.directory, document.getElementById(this.selected.id).value));
-            this.renameMode = false;
-            document.getElementById(this.selected.id).setAttribute('readonly', 'readonly');
-          }
-        }
 
       })
     }

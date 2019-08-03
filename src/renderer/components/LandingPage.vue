@@ -38,7 +38,8 @@
         action: '',
         workingFile: '',
         selectedFile: '',
-        directory: ''
+        directory: '',
+        renameMode: false
       };
     },
     methods: {
@@ -91,6 +92,20 @@
       });
 
       EventBus.$on('select', file => {
+        // MD is attempting to deselect item
+        if (!file && this.renameMode) {
+          return;
+        }
+
+        if (file && this.selectedFile) {
+          if (this.selectedFile === file & this.renameMode) return;
+
+          if (this.selectedFile != file & this.renameMode) {
+            this.renameMode = false;
+            document.getElementById(this.selectedFile.id).setAttribute('readonly', 'readonly');
+          }
+        }
+
         this.selectedFile = file;
       });
 
@@ -101,11 +116,11 @@
         }
         else if (evt.code == 'KeyC' && evt.ctrlKey) {        
           this.action = 'copy';
-          this.workingfile = this.selectedFile;
+          this.workingfile = this.selectedFile.file;
         }
         else if (evt.code == 'KeyX' && evt.ctrlKey) {
           this.action = 'cut';
-          this.workingfile = this.selectedFile;
+          this.workingfile = this.selectedFile.file;
         }
         else if (evt.code == 'KeyV' && evt.ctrlKey) {
           if (this.action === 'copy') {
@@ -116,11 +131,31 @@
           }
           this.action = '';
         }
+
+        if (evt.code === 'F2') {
+          this.renameMode = true;
+          document.getElementById(this.selectedFile.id).removeAttribute('readonly');
+        }
+        else if (evt.code === 'Escape') {
+          if(this.renameMode) {
+            this.renameMode = false;
+            document.getElementById(this.selectedFile.id).value = path.basename(this.selectedFile.directory);
+            document.getElementById(this.selectedFile.id).setAttribute('readonly', 'readonly');
+          }
+        }
+        else if (evt.code === 'Enter') {
+          if(this.renameMode) {
+            fs.rename(this.selectedFile.directory, path.join(this.directory, document.getElementById(this.selectedFile.id).value));
+            this.renameMode = false;
+            document.getElementById(this.selectedFile.id).setAttribute('readonly', 'readonly');
+          }
+        }
+
         else if (evt.code === 'Delete') {
             let me = this;
             this.$dialog.confirm('Please confirm to continue')
               .then(function(dialog) {
-                fs.remove(me.selectedFile);
+                fs.remove(me.selectedFile.file);
               });
           }
         else if (evt.code == 'KeyW' && evt.ctrlKey) {
