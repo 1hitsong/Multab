@@ -13,6 +13,7 @@ import { mapState } from "vuex";
 import uuid from 'uuid/v4';
 import path from 'path';
 import { EventBus } from './LandingPage/event-bus.js';
+import fs from 'fs-extra';
 
 import {remote} from 'electron';
 
@@ -30,7 +31,11 @@ export default {
   data() {
     return {
       tabs: [],
-      activeTabName: 'C:\\'
+      activeTabName: 'C:\\',
+      action: '',
+      workingFile: '',
+      selectedFile: '',
+      directory: ''
     };
   },
   methods: {
@@ -79,6 +84,11 @@ export default {
     EventBus.$on('cd', directory => {
       let folderPath = path.parse(directory);
       this.renameActiveTab(path.basename(directory) ? path.basename(directory) : folderPath.root);
+      this.directory = directory;
+    });
+
+    EventBus.$on('select', file => {
+      this.selectedFile = file;
     });
 
     document.addEventListener('keydown', (evt) => {
@@ -86,6 +96,25 @@ export default {
       if (evt.code == 'KeyT' && evt.ctrlKey) {
         this.createList();
       }
+
+      else if (evt.code == 'KeyC' && evt.ctrlKey) {        
+        this.action = 'copy';
+        this.workingfile = this.selectedFile;
+      }
+      else if (evt.code == 'KeyX' && evt.ctrlKey) {
+        this.action = 'cut';
+        this.workingfile = this.selectedFile;
+      }
+      else if (evt.code == 'KeyV' && evt.ctrlKey) {
+        if (this.action === 'copy') {
+          fs.copy(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
+        }
+        else if (this.action === 'cut') {
+          fs.move(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
+        }
+        this.action = '';
+      }
+
       else if (evt.code == 'KeyW' && evt.ctrlKey) {
         
         if (this.tabs.length > 1) {

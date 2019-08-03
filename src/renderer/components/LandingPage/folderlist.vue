@@ -88,6 +88,8 @@
           document.getElementById(this.selected.id).setAttribute('readonly', 'readonly');
         }
 
+
+        EventBus.$emit('select', item.directory);
         this.selected = item
       },
 
@@ -184,24 +186,7 @@
       document.addEventListener('keydown', (evt) => {
         evt = evt || window.event;
 
-        if (evt.code == 'KeyC' && evt.ctrlKey) {
-          this.action = 'copy';
-          this.workingfile = this.selected.directory;
-        }
-        else if (evt.code == 'KeyX' && evt.ctrlKey) {
-          this.action = 'cut';
-          this.workingfile = this.selected.directory;
-        }
-        else if (evt.code == 'KeyV' && evt.ctrlKey) {
-          if (this.action === 'copy') {
-            fs.copy(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
-          }
-          else if (this.action === 'cut') {
-            fs.move(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
-          }
-          this.action = '';
-        }
-        else if (evt.code === 'Delete') {
+        if (evt.code === 'Delete') {
           let me = this;
           this.$dialog.confirm('Please confirm to continue')
             .then(function(dialog) {
