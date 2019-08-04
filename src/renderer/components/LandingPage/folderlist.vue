@@ -1,20 +1,16 @@
 <template>
-  <div>
+  <div v-drag-and-drop:options="options">
       <md-app>
         <md-app-drawer md-permanent="full">
           <md-list>
-            <md-list-item>
-              <md-button @click="cd(homedirectory)">
-                <md-icon>home</md-icon>
-                Home
-              </md-button>
-            </md-list-item>
-            <md-list-item>
-              <md-button @click="cd(homedirectory + 'downloads')">
-                <md-icon>cloud_download</md-icon>
-                Downloads
-              </md-button>
-            </md-list-item>
+            <div v-for="item in favorites">
+              <md-list-item class="dropzone" v-bind:directory="item.directory">
+                <md-button @click="cd(item.directory)">
+                  <md-icon>{{item.icon}}</md-icon>
+                  {{item.name}}
+                </md-button>
+              </md-list-item>
+            </div>
           </md-list>
         </md-app-drawer>
         <md-app-content flex>
@@ -24,7 +20,7 @@
           <input ref="directoryInput" type="text" class="directory" v-model="directory" @keydown.enter="cd(directory)" />
           <button class="go hidden" @click="go">Go</button>
           <md-table v-model="folderdata" md-sort="name" md-sort-order="asc" @md-selected="onSelect" md-fixed-header>
-            <md-table-row slot="md-table-row" slot-scope="{ item }" md-selectable="single" @dblclick="open(item.directory, item.type)">
+            <md-table-row class="dropzone" v-bind:directory="item.directory" slot="md-table-row" slot-scope="{ item }" md-selectable="single" @dblclick="open(item.directory, item.type)">
               <md-table-cell md-label="Name" md-sort-by="name">
                 <md-field md-inline>
                   <img class="icon" v-bind:src="item.icon" /> 
@@ -65,12 +61,29 @@
     name: 'folderlist',
     data: function() {
       return {
+        favorites: [],
+        options: {
+          showDropzoneAreas: false,
+          dropzoneSelector: ".dropzone, .md-tab-nav-button",
+          draggableSelector: "tr",
+          onDrop: event => this.dropItem(event)
+        },
         directory: 'C:\\',
         folderdata: [],
         homedirectory: os.userInfo().homedir + '\\'
       }
     },
     methods: {
+      dropItem(e) {        
+        let fileName = e.items[0].attributes.directory.value;
+        let dropTarget = e.droptarget.attributes.directory.value;
+
+        if (!fileName || ! dropTarget) return;
+        
+        if (fs.existsSync(dropTarget) && fs.lstatSync(dropTarget).isDirectory()) {
+          EventBus.$emit('drag', {original: fileName, destination: path.resolve(dropTarget, path.basename(fileName))});
+        }
+      },
       goUpOneFolder() {
         this.cd(path.resolve(this.directory, '..'));
       },

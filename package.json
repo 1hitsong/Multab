@@ -59,6 +59,7 @@
     "pretty-file-icons": "^2.2.1",
     "uuid": "^3.3.2",
     "vue": "^2.5.16",
+    "vue-draggable": "^2.0.2",
     "vue-electron": "^1.0.6",
     "vue-material": "^1.0.0-beta-11",
     "vue-router": "^3.0.1",

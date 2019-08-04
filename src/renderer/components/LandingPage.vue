@@ -14,6 +14,7 @@
   import path from 'path';
   import { EventBus } from './LandingPage/event-bus.js';
   import fs from 'fs-extra';
+  import os from 'os';
 
   import {remote} from 'electron';
 
@@ -24,8 +25,11 @@
     import VuejsDialog from 'vuejs-dialog';
     import 'vuejs-dialog/dist/vuejs-dialog.min.css';
 
+    import VueDraggable from 'vue-draggable'
+
   import folderlist from './LandingPage/folderlist.vue'
 
+  Vue.use(VueDraggable)
   Vue.use(MdContent)
   Vue.use(MdTabs)
   Vue.use(VuejsDialog);
@@ -34,15 +38,24 @@
     data() {
       return {
         tabs: [],
-        activeTabName: 'C:\\',
         action: '',
         workingFile: '',
         selectedFile: '',
         directory: '',
-        renameMode: false
+        renameMode: false,
+        favorites: [
+          {name: 'Home', icon: 'home', directory: os.userInfo().homedir},
+          {name: 'Downloads', icon: 'cloud_download', directory: path.resolve(os.userInfo().homedir, 'downloads')}
+        ]
       };
     },
     methods: {
+      copyFile(original, destination) {
+        fs.copy(original, destination);
+      },
+      moveFile(original, destination) {
+        fs.move(original, destination);
+      },
       renameActiveTab(folderName) {
         let tabIndex = this.$refs.tabs.activeTabIndex;
 
@@ -74,8 +87,10 @@
 
         var ComponentClass = Vue.extend(folderlist)
         var instance = new ComponentClass({
-            propsData: { }
-        })
+        });
+
+        instance.$data.favorites = this.favorites;
+        
         instance.$slots.default = [ ]
         instance.$mount() // pass nothing
 
@@ -89,6 +104,12 @@
         let folderPath = path.parse(directory);
         this.renameActiveTab(path.basename(directory) ? path.basename(directory) : folderPath.root);
         this.directory = directory;
+      });
+
+      EventBus.$on('drag', data => {
+        //console.log(data.original, data.destination);
+        
+        this.moveFile(data.original, data.destination);
       });
 
       EventBus.$on('select', file => {
@@ -116,18 +137,18 @@
         }
         else if (evt.code == 'KeyC' && evt.ctrlKey) {        
           this.action = 'copy';
-          this.workingfile = this.selectedFile.file;
+          this.workingfile = this.selectedFile.directory;
         }
         else if (evt.code == 'KeyX' && evt.ctrlKey) {
           this.action = 'cut';
-          this.workingfile = this.selectedFile.file;
+          this.workingfile = this.selectedFile.directory;
         }
         else if (evt.code == 'KeyV' && evt.ctrlKey) {
           if (this.action === 'copy') {
-            fs.copy(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
+            this.copyFile(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
           }
           else if (this.action === 'cut') {
-            fs.move(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
+            this.moveFile(this.workingfile, path.join(this.directory, path.basename(this.workingfile)));
           }
           this.action = '';
         }
