@@ -22,10 +22,11 @@
   import 'vue-material/dist/vue-material.min.css'
   import 'vue-material/dist/theme/default.css'
 
-    import VuejsDialog from 'vuejs-dialog';
-    import 'vuejs-dialog/dist/vuejs-dialog.min.css';
+  import VuejsDialog from 'vuejs-dialog';
+  import 'vuejs-dialog/dist/vuejs-dialog.min.css';
 
-    import VueDraggable from 'vue-draggable'
+  import VueDraggable from 'vue-draggable'
+  import settings from 'settings-store'
 
   import folderlist from './LandingPage/folderlist.vue'
 
@@ -33,6 +34,17 @@
   Vue.use(MdContent)
   Vue.use(MdTabs)
   Vue.use(VuejsDialog);
+
+  settings.init({
+    appName: "multab"
+  });
+
+  if (!settings.all().hasOwnProperty('favorites')) {
+    settings.setValue("favorites", [
+        {name: 'Home', icon: 'home', directory: os.userInfo().homedir},
+        {name: 'Downloads', icon: 'cloud_download', directory: path.resolve(os.userInfo().homedir, 'downloads')}
+    ]);
+  }
 
   export default {
     data() {
@@ -43,10 +55,8 @@
         selectedFile: '',
         directory: '',
         renameMode: false,
-        favorites: [
-          {name: 'Home', icon: 'home', directory: os.userInfo().homedir},
-          {name: 'Downloads', icon: 'cloud_download', directory: path.resolve(os.userInfo().homedir, 'downloads')}
-        ]
+        favorites: [],
+        instance: []
       };
     },
     methods: {
@@ -86,20 +96,20 @@
         newTab.className = "md-tab";
 
         var ComponentClass = Vue.extend(folderlist)
-        var instance = new ComponentClass({
-        });
+        this.instance.push(new ComponentClass({}));
 
-        instance.$data.favorites = this.favorites;
-        
-        instance.$slots.default = [ ]
-        instance.$mount() // pass nothing
+        this.instance[this.instance.length - 1].$props.favorites = this.favorites;
+        this.instance[this.instance.length - 1].$slots.default = [ ]
+        this.instance[this.instance.length - 1].$mount()
 
-        newTab.appendChild(instance.$el);
+        newTab.appendChild(this.instance[this.instance.length - 1].$el);
 
         document.querySelector('.md-tabs-container').appendChild(newTab);
       }
     },
     created() {
+      this.favorites = settings.value("favorites");
+
       EventBus.$on('cd', directory => {
         let folderPath = path.parse(directory);
         this.renameActiveTab(path.basename(directory) ? path.basename(directory) : folderPath.root);
@@ -107,9 +117,24 @@
       });
 
       EventBus.$on('drag', data => {
-        //console.log(data.original, data.destination);
-        
         this.moveFile(data.original, data.destination);
+      });
+
+      EventBus.$on('favorite', directory => {
+
+        let tempArray = [...this.favorites];
+
+        tempArray.push({
+          name: path.basename(directory) ? path.basename(directory) : path.parse(directory).root, icon: 'folder', directory: directory
+        });
+
+        tempArray = JSON.parse(JSON.stringify(tempArray));
+        
+        settings.setValue('favorites', tempArray);
+        this.favorites = settings.value('favorites');
+        this.instance.forEach((folderList) => {
+          folderList.$props.favorites = this.favorites;
+        });
       });
 
       EventBus.$on('select', file => {
@@ -197,7 +222,7 @@
     },
     mounted() {
       this.createList();
-    }
+    },
   };
 </script>
 <style>

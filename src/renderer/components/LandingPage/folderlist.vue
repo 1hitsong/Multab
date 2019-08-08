@@ -17,6 +17,9 @@
           <md-button class="md-icon-button md-dense" @click="goUpOneFolder()">
             <md-icon>arrow_upward</md-icon>
           </md-button>
+          <md-button class="md-icon-button md-dense" @click="addToFavorites()">
+            <md-icon>star</md-icon>
+          </md-button>
           <input ref="directoryInput" type="text" class="directory" v-model="directory" @keydown.enter="cd(directory)" />
           <button class="go hidden" @click="go">Go</button>
           <md-table v-model="folderdata" md-sort="name" md-sort-order="asc" @md-selected="onSelect" md-fixed-header>
@@ -61,7 +64,6 @@
     name: 'folderlist',
     data: function() {
       return {
-        favorites: [],
         options: {
           showDropzoneAreas: false,
           dropzoneSelector: ".dropzone, .md-tab-nav-button",
@@ -73,6 +75,7 @@
         homedirectory: os.userInfo().homedir + '\\'
       }
     },
+    props: ['favorites'],
     methods: {
       dropItem(e) {        
         let fileName = e.items[0].attributes.directory.value;
@@ -86,6 +89,10 @@
       },
       goUpOneFolder() {
         this.cd(path.resolve(this.directory, '..'));
+      },
+
+      addToFavorites() {
+        EventBus.$emit('favorite', this.directory);
       },
 
       onSelect (item) {
@@ -158,7 +165,7 @@
     },
     created() {
       this.dir();
-    }
+    },
   }
 </script>
 <style>
@@ -174,7 +181,7 @@
     border-radius: 20px;
     position: absolute;
     right: 20px;
-    margin-left: 70px;
+    margin-left: 110px;
     width: -webkit-fill-available;
   }
 
