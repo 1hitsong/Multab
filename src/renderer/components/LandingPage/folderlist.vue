@@ -3,7 +3,7 @@
       <md-app>
         <md-app-drawer md-permanent="full">
           <md-list>
-            <div v-for="item in favorites">
+            <div class="favorite" v-for="(item, index) in favorites" :key="index">
               <md-list-item class="dropzone" v-bind:directory="item.directory">
                 <md-button @click="cd(item.directory)">
                   <md-icon>{{item.icon}}</md-icon>

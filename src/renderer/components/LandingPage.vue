@@ -1,9 +1,16 @@
 
 <template>
-  <div class="container">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700,400italic|Material+Icons">
-      <md-tabs ref="tabs" md-active-tab="1">
-      </md-tabs>
+  <div class="container" @contextmenu.prevent="$refs.menu.open($event, {data: $event})">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700,400italic|Material+Icons" />
+    <md-tabs ref="tabs" md-active-tab="1">
+    </md-tabs>
+    <vue-context ref="menu">
+      <template slot-scope="child">
+        <li>
+            <a href="#" @click.prevent="removeFromFavorites(child.data)">Remove From Favorites</a>
+        </li>
+      </template>
+    </vue-context>
   </div>
 </template>
 
@@ -19,16 +26,19 @@
   import {remote} from 'electron';
 
   import { MdApp, MdDrawer, MdButton, MdContent, MdTabs, MdTable, MdCard, MdRipple, MdIcon, MdList } from 'vue-material/dist/components'
-  import 'vue-material/dist/vue-material.min.css'
-  import 'vue-material/dist/theme/default.css'
+  import 'vue-material/dist/vue-material.min.css';
+  import 'vue-material/dist/theme/default.css';
 
   import VuejsDialog from 'vuejs-dialog';
   import 'vuejs-dialog/dist/vuejs-dialog.min.css';
 
-  import VueDraggable from 'vue-draggable'
-  import settings from 'settings-store'
+  import { VueContext } from 'vue-context';
 
-  import folderlist from './LandingPage/folderlist.vue'
+  import VueDraggable from 'vue-draggable';
+  import settings from 'settings-store';
+
+  import folderlist from './LandingPage/folderlist.vue';
+  
 
   Vue.use(VueDraggable)
   Vue.use(MdContent)
@@ -47,6 +57,7 @@
   }
 
   export default {
+    components: { VueContext },
     data() {
       return {
         tabs: [],
@@ -84,6 +95,10 @@
         this.$refs.tabs.setActiveTab(0);
 
         document.querySelector(`#${tabID}.md-tab`).remove();
+      },
+      removeFromFavorites(data) {
+        let indexToRemove = [...data.data.toElement.closest("ul").children].indexOf(data.data.toElement.closest(".favorite"));
+        EventBus.$emit('removefavorite', indexToRemove);
       },
       createList() {      
         let newID = 't' + uuid();
@@ -127,6 +142,21 @@
         tempArray.push({
           name: path.basename(directory) ? path.basename(directory) : path.parse(directory).root, icon: 'folder', directory: directory
         });
+
+        tempArray = JSON.parse(JSON.stringify(tempArray));
+        
+        settings.setValue('favorites', tempArray);
+        this.favorites = settings.value('favorites');
+        this.instance.forEach((folderList) => {
+          folderList.$props.favorites = this.favorites;
+        });
+      });
+
+      EventBus.$on('removefavorite', index => {
+
+        let tempArray = [...this.favorites];
+
+        tempArray.splice(index, 1);
 
         tempArray = JSON.parse(JSON.stringify(tempArray));
         
