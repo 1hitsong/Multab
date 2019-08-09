@@ -5,7 +5,7 @@
     <md-tabs ref="tabs" md-active-tab="1">
     </md-tabs>
     <vue-context ref="menu">
-      <template slot-scope="child">
+      <template slot-scope="child" v-if="child.data">
         <li>
             <a href="#" @click.prevent="removeFromFavorites(child.data)">Remove From Favorites</a>
         </li>
