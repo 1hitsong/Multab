@@ -3,7 +3,7 @@
       <md-app>
         <md-app-drawer md-permanent="full">
           <md-list>
-            <div class="favorite" v-for="(item, index) in favorites" :key="index">
+            <div class="favorite" v-for="(item, index) in favorites" :key="index" @contextmenu.prevent="showContextMenu($event, {context: 'favorites'})">
               <md-list-item class="dropzone" v-bind:directory="item.directory">
                 <md-button @click="cd(item.directory)">
                   <md-icon>{{item.icon}}</md-icon>
@@ -27,7 +27,7 @@
               <md-table-cell md-label="Name" md-sort-by="name">
                 <md-field md-inline>
                   <img class="icon" v-bind:src="item.icon" /> 
-                  <md-input v-bind:id="item.id" v-model="item.name" readonly></md-input>
+                  <md-input v-bind:id="item.id" v-model="item.name" @contextmenu.prevent="showContextMenu($event, {context: item.type})" readonly></md-input>
                 </md-field>
               </md-table-cell>
             </md-table-row>
@@ -70,12 +70,11 @@
           draggableSelector: "tr",
           onDrop: event => this.dropItem(event)
         },
-        directory: 'C:\\',
         folderdata: [],
         homedirectory: os.userInfo().homedir + '\\'
       }
     },
-    props: ['favorites'],
+    props: ['favorites', 'directory'],
     methods: {
       dropItem(e) {        
         let fileName = e.items[0].attributes.directory.value;
@@ -93,6 +92,10 @@
 
       addToFavorites() {
         EventBus.$emit('favorite', this.directory);
+      },
+
+      showContextMenu(event, data) {
+        EventBus.$emit('showcontextmenu', {event, data});
       },
 
       onSelect (item) {
@@ -164,7 +167,9 @@
       }
     },
     created() {
-      this.dir();
+    },
+    mounted() {
+      this.cd(this.directory);
     },
   }
 </script>

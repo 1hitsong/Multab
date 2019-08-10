@@ -1,8 +1,8 @@
 {
-  "name": "multab",
-  "version": "0.0.1",
+  "name": "MulTab",
+  "version": "0.1.1",
   "author": "1hitsong",
-  "description": "An electron-vue project",
+  "description": "Windows File explorer With Tabs",
   "license": null,
   "main": "./dist/electron/main.js",
   "scripts": {

@@ -1,13 +1,19 @@
 
 <template>
-  <div class="container" @contextmenu.prevent="$refs.menu.open($event, {data: $event})">
+  <div class="container">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700,400italic|Material+Icons" />
-    <md-tabs ref="tabs" md-active-tab="1">
+    <md-tabs ref="tabs" md-active-tab="0">
     </md-tabs>
-    <vue-context ref="menu">
+    <vue-context ref="menu" :close-on-click="true">
       <template slot-scope="child" v-if="child.data">
-        <li>
-            <a href="#" @click.prevent="removeFromFavorites(child.data)">Remove From Favorites</a>
+        <li v-if="child.data.showRemoveFavorites">
+            <a href="#" @click.prevent="removeFromFavorites($event, child.data)">Remove From Favorites</a>
+        </li>
+        <li v-if="child.data.showOpenFolder">
+            <a href="#" @click.prevent="open({data: child.data, format: 'newTab'})">Open In New Tab</a>
+        </li>
+        <li v-if="child.data.showOpenFolder">
+            <a href="#" @click.prevent="open({data: child.data, format: 'sameTab'})">Open</a>
         </li>
       </template>
     </vue-context>
@@ -60,6 +66,7 @@
     components: { VueContext },
     data() {
       return {
+        isNewTab: false,
         tabs: [],
         action: '',
         workingFile: '',
@@ -71,6 +78,15 @@
       };
     },
     methods: {
+      open(data) {
+        if (data.format === 'newTab') {
+          this.isNewTab = true;
+          this.createList(data.data.event.toElement.closest('tr').attributes.directory.value);
+        }
+        else {
+          this.instance[this.$refs.tabs.activeTabIndex].cd(data.data.event.toElement.closest('tr').attributes.directory.value);
+        }
+      },
       copyFile(original, destination) {
         fs.copy(original, destination);
       },
@@ -78,7 +94,8 @@
         fs.move(original, destination);
       },
       renameActiveTab(folderName) {
-        let tabIndex = this.$refs.tabs.activeTabIndex;
+        let tabIndex = this.isNewTab ? this.tabs.length - 1 : this.$refs.tabs.activeTabIndex;
+        this.isNewTab = false;        
 
         if (this.tabs[tabIndex]) {
           this.tabs[tabIndex].label = folderName;
@@ -95,13 +112,18 @@
         this.$refs.tabs.setActiveTab(0);
 
         document.querySelector(`#${tabID}.md-tab`).remove();
+
+        this.instance.splice(tabIndex, 1);
       },
-      removeFromFavorites(data) {
-        let indexToRemove = [...data.data.toElement.closest("ul").children].indexOf(data.data.toElement.closest(".favorite"));
+      removeFromFavorites(event, data) {
+        let indexToRemove = [...data.event.toElement.closest("ul").children].indexOf(data.event.toElement.closest(".favorite"));
         EventBus.$emit('removefavorite', indexToRemove);
       },
-      createList() {      
-        let newID = 't' + uuid();
+      createList(startingDirectory) {
+        let newID = 't' + uuid();        
+
+        startingDirectory = !startingDirectory ? 'c:\\' : startingDirectory
+
         this.tabs.push({hasContent: true, label: 'C:\\', props: {id: newID}});
         this.$refs.tabs.MdTabs.items = this.tabs
         this.$refs.tabs.setActiveTab(this.tabs.length - 1);
@@ -113,12 +135,12 @@
         var ComponentClass = Vue.extend(folderlist)
         this.instance.push(new ComponentClass({}));
 
+        this.instance[this.instance.length - 1].$props.directory = startingDirectory;
         this.instance[this.instance.length - 1].$props.favorites = this.favorites;
-        this.instance[this.instance.length - 1].$slots.default = [ ]
-        this.instance[this.instance.length - 1].$mount()
+        this.instance[this.instance.length - 1].$slots.default = [ ];
+        this.instance[this.instance.length - 1].$mount();
 
         newTab.appendChild(this.instance[this.instance.length - 1].$el);
-
         document.querySelector('.md-tabs-container').appendChild(newTab);
       }
     },
@@ -133,6 +155,16 @@
 
       EventBus.$on('drag', data => {
         this.moveFile(data.original, data.destination);
+      });
+
+      EventBus.$on('showcontextmenu', data => {
+        let options = {
+          event: data.event,
+          showRemoveFavorites: data.data.context==='favorites',
+          showOpenFolder: data.data.context==='folder'
+        };
+
+        this.$refs.menu.open(data.event, options);
       });
 
       EventBus.$on('favorite', directory => {
