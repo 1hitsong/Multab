@@ -130,7 +130,7 @@
 
         var folders = [];
         var files = [];
-        let folderListingCommand = exec('dir /B /A:D ' + this.directory);
+        let folderListingCommand = exec('dir /B /A:D "' + this.directory + '"');
         let fileListingCommand;
 
         folderListingCommand.stdout.on('data', _data => {
@@ -146,7 +146,7 @@
 
         folderListingCommand.stdout.on('close', () => {
           this.$set(this, "folderdata", this.folderdata.concat(folders));
-          fileListingCommand = exec('dir /B /A:-D ' + this.directory);
+          fileListingCommand = exec('dir /B /A:-D "' + this.directory + '"');
 
           fileListingCommand.stdout.on('data', _data => {
             var res = _data.split('\r\n');

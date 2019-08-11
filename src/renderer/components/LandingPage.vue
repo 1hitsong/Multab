@@ -15,6 +15,9 @@
         <li v-if="child.data.showOpenFolder">
             <a href="#" @click.prevent="open({data: child.data, format: 'sameTab'})">Open</a>
         </li>
+        <li v-if="child.data.showAddToFavorites">
+            <a href="#" @click.prevent="addToFavorites({data: child.data})">Add To Favorites</a>
+        </li>
       </template>
     </vue-context>
   </div>
@@ -119,6 +122,10 @@
         let indexToRemove = [...data.event.toElement.closest("ul").children].indexOf(data.event.toElement.closest(".favorite"));
         EventBus.$emit('removefavorite', indexToRemove);
       },
+      addToFavorites(data) {
+        let directoryToAdd = data.data.event.toElement.closest('tr').attributes.directory.value;
+        EventBus.$emit('favorite', directoryToAdd);
+      },
       createList(startingDirectory) {
         let newID = 't' + uuid();        
 
@@ -161,7 +168,8 @@
         let options = {
           event: data.event,
           showRemoveFavorites: data.data.context==='favorites',
-          showOpenFolder: data.data.context==='folder'
+          showOpenFolder: data.data.context==='folder',
+          showAddToFavorites: data.data.context === 'folder'
         };
 
         this.$refs.menu.open(data.event, options);
