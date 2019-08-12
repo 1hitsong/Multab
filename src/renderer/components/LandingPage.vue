@@ -12,11 +12,14 @@
         <li v-if="child.data.showOpenNewTab">
             <a href="#" @click.prevent="open({data: child.data, format: 'newTab'})">Open In New Tab</a>
         </li>
-        <li>
+        <li v-if="child.data.showOpen">
             <a href="#" @click.prevent="open(child.data.event.toElement.closest('tr').attributes)">Open</a>
         </li>
         <li v-if="child.data.showAddToFavorites">
             <a href="#" @click.prevent="addToFavorites({data: child.data})">Add To Favorites</a>
+        </li>
+        <li v-if="child.data.showCopyPath">
+            <a href="#" @click.prevent="copyPath(child.data.event.toElement)">Copy Path</a>
         </li>
       </template>
     </vue-context>
@@ -33,7 +36,7 @@
   import os from 'os';
   const exec = require("child_process").exec;
 
-  import {remote} from 'electron';
+  import {remote, clipboard} from 'electron';
 
   import { MdApp, MdDrawer, MdButton, MdContent, MdTabs, MdTable, MdCard, MdRipple, MdIcon, MdList } from 'vue-material/dist/components'
   import 'vue-material/dist/vue-material.min.css';
@@ -82,6 +85,9 @@
       };
     },
     methods: {
+      copyPath(item) {
+        clipboard.writeText(item.closest('tr').attributes.directory.value);
+      },
       open(data) {
         if (data.format === 'newTab') {
           this.isNewTab = true;
@@ -179,7 +185,9 @@
           event: data.event,
           showRemoveFavorites: data.data.context==='favorites',
           showOpenNewTab: data.data.context==='folder',
-          showAddToFavorites: data.data.context === 'folder'
+          showAddToFavorites: data.data.context === 'folder',
+          showOpen: data.data.context !== 'favorites',
+          showCopyPath: data.data.context !== 'favorites'
         };
 
         this.$refs.menu.open(data.event, options);
