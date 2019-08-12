@@ -9,11 +9,11 @@
         <li v-if="child.data.showRemoveFavorites">
             <a href="#" @click.prevent="removeFromFavorites($event, child.data)">Remove From Favorites</a>
         </li>
-        <li v-if="child.data.showOpenFolder">
+        <li v-if="child.data.showOpenNewTab">
             <a href="#" @click.prevent="open({data: child.data, format: 'newTab'})">Open In New Tab</a>
         </li>
-        <li v-if="child.data.showOpenFolder">
-            <a href="#" @click.prevent="open({data: child.data, format: 'sameTab'})">Open</a>
+        <li>
+            <a href="#" @click.prevent="open(child.data.event.toElement.closest('tr').attributes)">Open</a>
         </li>
         <li v-if="child.data.showAddToFavorites">
             <a href="#" @click.prevent="addToFavorites({data: child.data})">Add To Favorites</a>
@@ -31,6 +31,7 @@
   import { EventBus } from './LandingPage/event-bus.js';
   import fs from 'fs-extra';
   import os from 'os';
+  const exec = require("child_process").exec;
 
   import {remote} from 'electron';
 
@@ -87,7 +88,7 @@
           this.createList(data.data.event.toElement.closest('tr').attributes.directory.value);
         }
         else {
-          this.instance[this.$refs.tabs.activeTabIndex].cd(data.data.event.toElement.closest('tr').attributes.directory.value);
+          EventBus.$emit('open', {item: data.directory.value, type: data.type.value});
         }
       },
       copyFile(original, destination) {
@@ -154,6 +155,15 @@
     created() {
       this.favorites = settings.value("favorites");
 
+      EventBus.$on('open', data => {
+        if (data.type === 'folder') {
+            this.instance[this.$refs.tabs.activeTabIndex].cd(data.item);
+          }
+          else {
+            exec('start "" "' + data.item + '"')
+          }
+      });
+
       EventBus.$on('cd', directory => {
         let folderPath = path.parse(directory);
         this.renameActiveTab(path.basename(directory) ? path.basename(directory) : folderPath.root);
@@ -168,7 +178,7 @@
         let options = {
           event: data.event,
           showRemoveFavorites: data.data.context==='favorites',
-          showOpenFolder: data.data.context==='folder',
+          showOpenNewTab: data.data.context==='folder',
           showAddToFavorites: data.data.context === 'folder'
         };
 
@@ -228,6 +238,7 @@
       document.addEventListener('keydown', (evt) => {
         evt = evt || window.event;
         if (evt.code == 'KeyT' && evt.ctrlKey) {
+          this.isNewTab = true;
           this.createList();
         }
         else if (evt.code == 'KeyC' && evt.ctrlKey) {        

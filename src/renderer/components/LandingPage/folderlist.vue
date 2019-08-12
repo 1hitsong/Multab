@@ -23,7 +23,7 @@
           <input ref="directoryInput" type="text" class="directory" v-model="directory" @keydown.enter="cd(directory)" />
           <button class="go hidden" @click="go">Go</button>
           <md-table v-model="folderdata" md-sort="name" md-sort-order="asc" @md-selected="onSelect" md-fixed-header>
-            <md-table-row class="dropzone" v-bind:directory="item.directory" slot="md-table-row" slot-scope="{ item }" md-selectable="single" @dblclick="open(item.directory, item.type)">
+            <md-table-row class="dropzone" v-bind:directory="item.directory" v-bind:type="item.type" slot="md-table-row" slot-scope="{ item }" md-selectable="single" @dblclick="open(item.directory, item.type)">
               <md-table-cell md-label="Name" md-sort-by="name">
                 <md-field md-inline>
                   <img class="icon" v-bind:src="item.icon" /> 
@@ -98,7 +98,7 @@
         EventBus.$emit('showcontextmenu', {event, data});
       },
 
-      onSelect (item) {
+      onSelect(item) {
         EventBus.$emit('select', item);
       },
 
@@ -107,12 +107,7 @@
       },
 
       open: function(location, type) {
-        if (type === 'folder') {
-          this.cd(location);
-        }
-        else {
-          exec('start "" "' + location + '"')
-        }
+        EventBus.$emit('open', {item: location, type: type});
       },
 
       cd: function (directory) {
