@@ -15,11 +15,23 @@
         <li v-if="child.data.showOpen">
             <a href="#" @click.prevent="open(child.data.event.toElement.closest('tr').attributes)">Open</a>
         </li>
+
         <li v-if="child.data.showAddToFavorites">
             <a href="#" @click.prevent="addToFavorites({data: child.data})">Add To Favorites</a>
         </li>
+
+        <li class="borderTop" v-if="child.data.showCut">
+            <a href="#" @click.prevent="cutItem(child.data.event.toElement.closest('tr').attributes.directory.value)">Cut</a>
+        </li>
+        <li v-if="child.data.showCopy">
+            <a href="#" @click.prevent="copyItem(child.data.event.toElement.closest('tr').attributes.directory.value)">Copy</a>
+        </li>
         <li v-if="child.data.showCopyPath">
             <a href="#" @click.prevent="copyPath(child.data.event.toElement)">Copy Path</a>
+        </li>
+        
+        <li class="borderTop" v-if="child.data.showRename">
+            <a href="#" @click.prevent="enableRename(child.data.event.toElement.id)">Rename</a>
         </li>
       </template>
     </vue-context>
@@ -133,6 +145,20 @@
         let directoryToAdd = data.data.event.toElement.closest('tr').attributes.directory.value;
         EventBus.$emit('favorite', directoryToAdd);
       },
+      copyItem(item) {
+        this.action = 'copy';
+        this.workingfile = item;
+      },
+      cutItem(item) {
+        this.action = 'cut';
+        this.workingfile = item;
+      },
+      enableRename(item) {        
+        this.renameMode = true;
+        document.getElementById(item).removeAttribute('readonly')
+        document.getElementById(item).setAttribute('autofocus', 'autofocus');
+        document.getElementById(item).focus();
+      },
       createList(startingDirectory) {
         let newID = 't' + uuid();        
 
@@ -187,7 +213,10 @@
           showOpenNewTab: data.data.context==='folder',
           showAddToFavorites: data.data.context === 'folder',
           showOpen: data.data.context !== 'favorites',
-          showCopyPath: data.data.context !== 'favorites'
+          showCopyPath: data.data.context !== 'favorites',
+          showCut: data.data.context !== 'favorites',
+          showCopy: data.data.context !== 'favorites',
+          showRename: data.data.context !== 'favorites'
         };
 
         this.$refs.menu.open(data.event, options);
@@ -249,13 +278,11 @@
           this.isNewTab = true;
           this.createList();
         }
-        else if (evt.code == 'KeyC' && evt.ctrlKey) {        
-          this.action = 'copy';
-          this.workingfile = this.selectedFile.directory;
+        else if (evt.code == 'KeyC' && evt.ctrlKey) {
+          this.copyItem(this.selectedFile.directory);
         }
         else if (evt.code == 'KeyX' && evt.ctrlKey) {
-          this.action = 'cut';
-          this.workingfile = this.selectedFile.directory;
+          this.cutItem(this.selectedFile.directory);
         }
         else if (evt.code == 'KeyV' && evt.ctrlKey) {
           if (this.action === 'copy') {
@@ -268,11 +295,10 @@
         }
 
         if (evt.code === 'F2') {
-          this.renameMode = true;
-          document.getElementById(this.selectedFile.id).removeAttribute('readonly');
+          this.enableRename(this.selectedFile.id);
         }
         else if (evt.code === 'Escape') {
-          if(this.renameMode) {
+          if (this.renameMode) {
             this.renameMode = false;
             document.getElementById(this.selectedFile.id).value = path.basename(this.selectedFile.directory);
             document.getElementById(this.selectedFile.id).setAttribute('readonly', 'readonly');
@@ -328,5 +354,9 @@
 
   .md-tabs {
     height: 100%;
+  }
+
+  .borderTop {
+    border-top: 1px solid #ccc;
   }
 </style>
