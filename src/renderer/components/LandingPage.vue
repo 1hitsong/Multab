@@ -30,7 +30,10 @@
             <a href="#" @click.prevent="copyPath(child.data.event.toElement)">Copy Path</a>
         </li>
         
-        <li class="borderTop" v-if="child.data.showRename">
+        <li class="borderTop">
+            <a href="#" @click.prevent="deleteItem(child.data.event.toElement.closest('tr').attributes.directory.value)">Delete</a>
+        </li>
+        <li v-if="child.data.showRename">
             <a href="#" @click.prevent="enableRename(child.data.event.toElement.id)">Rename</a>
         </li>
       </template>
@@ -152,6 +155,12 @@
       cutItem(item) {
         this.action = 'cut';
         this.workingfile = item;
+      },
+      deleteItem(item) {
+        this.$dialog.confirm('Please confirm to continue')
+          .then(function(dialog) {
+            fs.remove(item);
+          });
       },
       enableRename(item) {        
         this.renameMode = true;
@@ -313,12 +322,8 @@
         }
 
         else if (evt.code === 'Delete') {
-            let me = this;
-            this.$dialog.confirm('Please confirm to continue')
-              .then(function(dialog) {
-                fs.remove(me.selectedFile.file);
-              });
-          }
+          this.deleteItem(this.selectedFile.directory);
+        }
         else if (evt.code == 'KeyW' && evt.ctrlKey) {
           
           if (this.tabs.length > 1) {
