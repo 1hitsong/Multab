@@ -35,6 +35,11 @@
                   {{ item.size }}
                 </md-field>
               </md-table-cell>
+              <md-table-cell md-label="Date Modified" md-sort-by="datemodified">
+                <md-field md-inline>
+                  {{ item.datemodified }}
+                </md-field>
+              </md-table-cell>
             </md-table-row>
           </md-table>
         </md-app-content>
@@ -47,6 +52,7 @@
   import fs from 'fs-extra';
   import path from 'path';
   import prettyBytes from 'pretty-bytes';
+  import { format } from 'date-fns'
   const exec = require("child_process").exec;
   const prettyFileIcons = require('pretty-file-icons');
   import uuid from 'uuid/v4';
@@ -153,7 +159,8 @@
             try {
               let stats = fs.statSync(path.resolve(this.directory, file));
               if (!stats.isDirectory()) {
-                this.$set(this, "folderdata", this.folderdata.concat({ id: 'i' + uuid(), name: file, size: prettyBytes(stats.size), directory: this.directory + file, icon: `./static/fileicons/${prettyFileIcons.getIcon(file, 'svg')}`, type: 'file'}));
+                
+                this.$set(this, "folderdata", this.folderdata.concat({ id: 'i' + uuid(), name: file, size: prettyBytes(stats.size), directory: this.directory + file, datemodified: format(stats.mtime, 'MM/DD/YYYY h:mm A'), icon: `./static/fileicons/${prettyFileIcons.getIcon(file, 'svg')}`, type: 'file'}));
               }
             }
             catch (err) {}
