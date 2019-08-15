@@ -30,6 +30,11 @@
                   <md-input v-bind:id="item.id" v-model="item.name" @contextmenu.prevent="showContextMenu($event, {context: item.type})" readonly></md-input>
                 </md-field>
               </md-table-cell>
+              <md-table-cell md-label="Size" md-sort-by="size">
+                <md-field md-inline>
+                  {{ item.size }}
+                </md-field>
+              </md-table-cell>
             </md-table-row>
           </md-table>
         </md-app-content>
@@ -41,6 +46,7 @@
   import Vue from 'vue';
   import fs from 'fs-extra';
   import path from 'path';
+  import prettyBytes from 'pretty-bytes';
   const exec = require("child_process").exec;
   const prettyFileIcons = require('pretty-file-icons');
   import uuid from 'uuid/v4';
@@ -141,22 +147,18 @@
 
         folderListingCommand.stdout.on('close', () => {
           this.$set(this, "folderdata", this.folderdata.concat(folders));
-          fileListingCommand = exec('dir /B /A:-D "' + this.directory + '"');
 
-          fileListingCommand.stdout.on('data', _data => {
-            var res = _data.split('\r\n');
-
-            res = res.filter((item) => !['.', '$'].includes(item.charAt(0)));
-            res.forEach( (element) => {
-              if (element.length) {
-                files.push({ id: 'i' + uuid(), name: element, directory: this.directory + element, icon: `./static/fileicons/${prettyFileIcons.getIcon(element, 'svg')}`, type: 'file'});
+          const files = fs.readdirSync(this.directory, 'utf8');
+          for (let file of files) {
+            try {
+              let stats = fs.statSync(path.resolve(this.directory, file));
+              if (!stats.isDirectory()) {
+                this.$set(this, "folderdata", this.folderdata.concat({ id: 'i' + uuid(), name: file, size: prettyBytes(stats.size), directory: this.directory + file, icon: `./static/fileicons/${prettyFileIcons.getIcon(file, 'svg')}`, type: 'file'}));
               }
-            });
-          }); 
+            }
+            catch (err) {}
+          }
 
-          fileListingCommand.stdout.on('close', () => {
-            this.$set(this, "folderdata", this.folderdata.concat(files));
-          });
         });
 
       }
