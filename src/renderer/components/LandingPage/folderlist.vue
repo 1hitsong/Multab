@@ -153,18 +153,29 @@
 
         folderListingCommand.stdout.on('close', () => {
           this.$set(this, "folderdata", this.folderdata.concat(folders));
+          folders = [];
 
-          const files = fs.readdirSync(this.directory, 'utf8');
-          for (let file of files) {
-            try {
-              let stats = fs.statSync(path.resolve(this.directory, file));
-              if (!stats.isDirectory()) {
-                
-                this.$set(this, "folderdata", this.folderdata.concat({ id: 'i' + uuid(), name: file, size: prettyBytes(stats.size), directory: this.directory + file, datemodified: format(stats.mtime, 'MM/DD/YYYY h:mm A'), icon: `./static/fileicons/${prettyFileIcons.getIcon(file, 'svg')}`, type: 'file'}));
+          let fileListingCommand = exec('dir /A:-D "' + this.directory + '"');
+
+          fileListingCommand.stdout.on('data', _data => {
+            var res = _data.split('\r\n');
+            res.splice(0, 4);
+            res.splice(-3);
+
+            res = res.filter((item) => !['.', '$'].includes(item.charAt(0)));
+
+            res.forEach( (element) => {
+              if (element.length) {
+                files.push({ id: 'i' + uuid(), name: element.substr(39), size: prettyBytes(parseInt(element.substr(20, 19).trim().replace(',', ''))), datemodified: format(element.substr(0,20), 'MM/DD/YYYY h:mm A'), directory: this.directory + element, icon: `./static/fileicons/${prettyFileIcons.getIcon(element, 'svg')}`, type: 'file'});
               }
-            }
-            catch (err) {}
-          }
+            });
+
+            fileListingCommand.stdout.on('close', () => {
+              this.$set(this, "folderdata", this.folderdata.concat(files));
+              files = []
+            });
+
+          });
 
         });
 
